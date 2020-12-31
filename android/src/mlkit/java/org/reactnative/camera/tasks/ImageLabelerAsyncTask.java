@@ -79,7 +79,7 @@ public class ImageLabelerAsyncTask extends android.os.AsyncTask<Void, Void, Void
               @Override
               public void onSuccess(List<ImageLabel> labels) {
                 WritableArray serializedLabels = serializeEventData(labels);
-                mDelegate.onLabelsDetected(serializedLabels);
+                mDelegate.onLabelsDetected(serializedLabels, mWidth, mHeight, mImageData);
                 mDelegate.onImageLabelingTaskCompleted();
               }
             })

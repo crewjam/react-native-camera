@@ -498,12 +498,13 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     setScanning(mShouldDetectFaces || mShouldGoogleDetectBarcodes || mShouldScanBarCodes || mShouldRecognizeText || mShouldDetectLabels);
   }
 
-  public void onFacesDetected(WritableArray data) {
+  public void onFacesDetected(WritableArray data, int width, int height, byte[] imageData) {
     if (!mShouldDetectFaces) {
       return;
     }
 
-    RNCameraViewHelper.emitFacesDetectedEvent(this, data);
+    final byte[] compressedImage = compressImage(width, height, imageData);
+    RNCameraViewHelper.emitFacesDetectedEvent(this, data, compressedImage);
   }
 
   public void onFaceDetectionError(RNFaceDetector faceDetector) {
@@ -546,26 +547,31 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     mGoogleVisionBarCodeMode = barcodeMode;
   }
 
+  public byte[] compressImage(int width, int height, byte[] imageData) {
+    // See discussion in https://github.com/react-native-community/react-native-camera/issues/2786
+    final byte[] compressedImage;
+    try {
+      // https://stackoverflow.com/a/32793908/122441
+      final YuvImage yuvImage = new YuvImage(imageData, ImageFormat.NV21, width, height, null);
+      final ByteArrayOutputStream imageStream = new ByteArrayOutputStream();
+      yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, imageStream);
+      compressedImage = imageStream.toByteArray();
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Error decoding imageData from NV21 format (%d bytes)", imageData.length), e);
+    }
+    return compressedImage;
+  }
+
   public void onBarcodesDetected(WritableArray barcodesDetected, int width, int height, byte[] imageData) {
     if (!mShouldGoogleDetectBarcodes) {
       return;
     }
+    if (barcodesDetected.size() == 0) {
+      return;
+    }
 
     // See discussion in https://github.com/react-native-community/react-native-camera/issues/2786
-    final byte[] compressedImage;
-    if (mDetectedImageInEvent) {
-      try {
-        // https://stackoverflow.com/a/32793908/122441
-        final YuvImage yuvImage = new YuvImage(imageData, ImageFormat.NV21, width, height, null);
-        final ByteArrayOutputStream imageStream = new ByteArrayOutputStream();
-        yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, imageStream);
-        compressedImage = imageStream.toByteArray();
-      } catch (Exception e) {
-        throw new RuntimeException(String.format("Error decoding imageData from NV21 format (%d bytes)", imageData.length), e);
-      }
-    } else {
-      compressedImage = null;
-    }
+    final byte[] compressedImage = compressImage(width, height, imageData);
 
     RNCameraViewHelper.emitBarcodesDetectedEvent(this, barcodesDetected, compressedImage);
   }
@@ -598,11 +604,12 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     setScanning(mShouldDetectFaces || mShouldGoogleDetectBarcodes || mShouldScanBarCodes || mShouldRecognizeText || mShouldDetectLabels);
   }
 
-  public void onLabelsDetected(WritableArray labelsDetected) {
+  public void onLabelsDetected(WritableArray labelsDetected, int width, int height, byte[] imageData) {
     if (!mShouldDetectLabels) {
       return;
     }
-    RNCameraViewHelper.emitLabelsDetectedEvent(this, labelsDetected);
+    final byte[] compressedImage = compressImage(width, height, imageData);
+    RNCameraViewHelper.emitLabelsDetectedEvent(this, labelsDetected, compressedImage);
   }
 
   public void onImageLabelingError(RNImageLabeler imageLabeler) {
@@ -628,12 +635,13 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     setScanning(mShouldDetectFaces || mShouldGoogleDetectBarcodes || mShouldScanBarCodes || mShouldRecognizeText || mShouldDetectLabels);
   }
 
-  public void onTextRecognized(WritableArray serializedData) {
+  public void onTextRecognized(WritableArray serializedData, int width, int height, byte[] imageData) {
     if (!mShouldRecognizeText) {
       return;
     }
 
-    RNCameraViewHelper.emitTextRecognizedEvent(this, serializedData);
+    final byte[] compressedImage = compressImage(width, height, imageData);
+    RNCameraViewHelper.emitTextRecognizedEvent(this, serializedData, compressedImage);
   }
 
   @Override

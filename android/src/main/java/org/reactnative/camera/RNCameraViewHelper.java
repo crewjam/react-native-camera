@@ -259,13 +259,13 @@ public class RNCameraViewHelper {
   }
   // Face detection events
 
-  public static void emitFacesDetectedEvent(final ViewGroup view, final WritableArray data) {
+  public static void emitFacesDetectedEvent(final ViewGroup view, final WritableArray data, final byte[] compressedImage) {
 
     final ReactContext reactContext = (ReactContext) view.getContext();
     reactContext.runOnNativeModulesQueueThread(new Runnable() {
       @Override
       public void run() {
-        FacesDetectedEvent event = FacesDetectedEvent.obtain(view.getId(), data);
+        FacesDetectedEvent event = FacesDetectedEvent.obtain(view.getId(), data, compressedImage);
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
      });
@@ -324,12 +324,12 @@ public class RNCameraViewHelper {
 
   // Text recognition event
 
-  public static void emitTextRecognizedEvent(final ViewGroup view, final WritableArray data) {
+  public static void emitTextRecognizedEvent(final ViewGroup view, final WritableArray data, final byte[] compressedImage) {
     final ReactContext reactContext = (ReactContext) view.getContext();
     reactContext.runOnNativeModulesQueueThread(new Runnable() {
       @Override
       public void run() {
-        TextRecognizedEvent event = TextRecognizedEvent.obtain(view.getId(), data);
+        TextRecognizedEvent event = TextRecognizedEvent.obtain(view.getId(), data, compressedImage);
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
     });
@@ -337,13 +337,13 @@ public class RNCameraViewHelper {
 
   // Image labeling events
 
-  public static void emitLabelsDetectedEvent(final ViewGroup view, final WritableArray data) {
+  public static void emitLabelsDetectedEvent(final ViewGroup view, final WritableArray data, final byte[] compressedImage) {
 
     final ReactContext reactContext = (ReactContext) view.getContext();
     reactContext.runOnNativeModulesQueueThread(new Runnable() {
       @Override
       public void run() {
-        LabelsDetectedEvent event = LabelsDetectedEvent.obtain(view.getId(), data);
+        LabelsDetectedEvent event = LabelsDetectedEvent.obtain(view.getId(), data, compressedImage);
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
     });

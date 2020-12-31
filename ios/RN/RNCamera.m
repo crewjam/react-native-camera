@@ -2248,6 +2248,10 @@ BOOL _sessionInterrupted = NO;
         return;
     }
 
+    float sampleRateForTextDetection = 0.5;
+    float sampleRateForFaceDetection = 0.5;
+    float sampleRateForBarcodeDetection = 0.5;
+    
     // Do not submit image for text/face recognition too often:
     // 1. we only dispatch events every 500ms anyway
     // 2. wait until previous recognition is finished
@@ -2256,10 +2260,10 @@ BOOL _sessionInterrupted = NO;
     NSTimeInterval timePassedSinceSubmittingForText = [methodFinish timeIntervalSinceDate:self.startText];
     NSTimeInterval timePassedSinceSubmittingForFace = [methodFinish timeIntervalSinceDate:self.startFace];
     NSTimeInterval timePassedSinceSubmittingForLabel = [methodFinish timeIntervalSinceDate:self.startLabel];
-    BOOL canSubmitForTextDetection = timePassedSinceSubmittingForText > 0.5 && _finishedReadingText && self.canReadText && [self.textDetector isRealDetector];
-    BOOL canSubmitForFaceDetection = timePassedSinceSubmittingForFace > 0.5 && _finishedDetectingFace && self.canDetectFaces && [self.faceDetector isRealDetector];
+    BOOL canSubmitForTextDetection = timePassedSinceSubmittingForText > sampleRateForTextDetection && _finishedReadingText && self.canReadText && [self.textDetector isRealDetector];
+    BOOL canSubmitForFaceDetection = timePassedSinceSubmittingForFace > sampleRateForFaceDetection && _finishedDetectingFace && self.canDetectFaces && [self.faceDetector isRealDetector];
     BOOL canSubmitForBarcodeDetection = self.canDetectBarcodes && [self.barcodeDetector isRealDetector];
-    BOOL canSubmitForLabelDetection = timePassedSinceSubmittingForLabel > 0.5 && _finishedDetectingLabel && self.canDetectLabels && [self.labelDetector isRealDetector];
+    BOOL canSubmitForLabelDetection = timePassedSinceSubmittingForLabel > sampleRateForBarcodeDetection && _finishedDetectingLabel && self.canDetectLabels && [self.labelDetector isRealDetector];
     if (canSubmitForFaceDetection || canSubmitForTextDetection || canSubmitForBarcodeDetection || canSubmitForLabelDetection) {
         CGSize previewSize = CGSizeMake(_previewLayer.frame.size.width, _previewLayer.frame.size.height);
         NSInteger position = self.videoCaptureDeviceInput.device.position;
@@ -2273,8 +2277,13 @@ BOOL _sessionInterrupted = NO;
             _finishedReadingText = false;
             self.startText = [NSDate date];
             [self.textDetector findTextBlocksInFrame:image scaleX:scaleX scaleY:scaleY completed:^(NSArray * textBlocks) {
-                NSDictionary *eventText = @{@"type" : @"TextBlock", @"textBlocks" : textBlocks};
-                [self onText:eventText];
+                if (textBlocks.count > 0) {
+                    NSData *jpegImage = UIImageJPEGRepresentation(image, 1.0);
+                    NSString *encodedImage = [jpegImage base64EncodedStringWithOptions:0];
+                    NSDictionary *eventText = @{@"type" : @"TextBlock", @"textBlocks" : textBlocks, @"image": encodedImage};
+                    
+                    [self onText:eventText];
+                }
                 self.finishedReadingText = true;
             }];
         }
@@ -2283,8 +2292,12 @@ BOOL _sessionInterrupted = NO;
             _finishedDetectingFace = false;
             self.startFace = [NSDate date];
             [self.faceDetector findFacesInFrame:image scaleX:scaleX scaleY:scaleY completed:^(NSArray * faces) {
-                NSDictionary *eventFace = @{@"type" : @"face", @"faces" : faces};
-                [self onFacesDetected:eventFace];
+                if (faces.count > 0) {
+                    NSData *jpegImage = UIImageJPEGRepresentation(image, 1.0);
+                    NSString *encodedImage = [jpegImage base64EncodedStringWithOptions:0];
+                    NSDictionary *eventFace = @{@"type" : @"face", @"faces" : faces, @"image": encodedImage};
+                    [self onFacesDetected:eventFace];
+                }
                 self.finishedDetectingFace = true;
             }];
         }
@@ -2311,8 +2324,12 @@ BOOL _sessionInterrupted = NO;
             }
 
             [self.barcodeDetector findBarcodesInFrame:image scaleX:scaleX scaleY:scaleY completed:^(NSArray * barcodes) {
-                NSDictionary *eventBarcode = @{@"type" : @"barcode", @"barcodes" : barcodes};
-                [self onBarcodesDetected:eventBarcode];
+                if (barcodes.count > 0) {
+                    NSData *jpegImage = UIImageJPEGRepresentation(image, 1.0);
+                    NSString *encodedImage = [jpegImage base64EncodedStringWithOptions:0];
+                    NSDictionary *eventBarcode = @{@"type" : @"barcode", @"barcodes" : barcodes, @"image": encodedImage};
+                    [self onBarcodesDetected:eventBarcode];
+                }
             }];
         }
         // find labels
@@ -2320,8 +2337,12 @@ BOOL _sessionInterrupted = NO;
             _finishedDetectingLabel = false;
             self.startLabel = [NSDate date];
             [self.labelDetector findLabelsInFrame:image scaleX:scaleX scaleY:scaleY completed:^(NSArray * labels) {
-                NSDictionary *eventLabel = @{@"type" : @"label", @"labels" : labels};
-                [self onLabelsDetected:eventLabel];
+                if (labels.count > 0) {
+                    NSData *jpegImage = UIImageJPEGRepresentation(image, 1.0);
+                    NSString *encodedImage = [jpegImage base64EncodedStringWithOptions:0];
+                    NSDictionary *eventLabel = @{@"type" : @"label", @"labels" : labels, @"image": encodedImage};
+                    [self onLabelsDetected:eventLabel];
+                }
                 self.finishedDetectingLabel = true;
             }];
         }
