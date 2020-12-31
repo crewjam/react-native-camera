@@ -1,5 +1,7 @@
 package org.reactnative.camera.events;
 
+import android.util.Base64;
+
 import androidx.core.util.Pools;
 
 import com.facebook.react.bridge.Arguments;
@@ -15,21 +17,23 @@ public class LabelsDetectedEvent extends Event<LabelsDetectedEvent> {
       new Pools.SynchronizedPool<>(3);
 
   private WritableArray mData;
+  private byte[] mCompressedImage;
 
   private LabelsDetectedEvent() {}
 
-  public static LabelsDetectedEvent obtain(int viewTag, WritableArray data) {
+  public static LabelsDetectedEvent obtain(int viewTag, WritableArray data, byte[] compressedImage) {
     LabelsDetectedEvent event = EVENTS_POOL.acquire();
     if (event == null) {
       event = new LabelsDetectedEvent();
     }
-    event.init(viewTag, data);
+    event.init(viewTag, data, compressedImage);
     return event;
   }
 
-  private void init(int viewTag, WritableArray data) {
+  private void init(int viewTag, WritableArray data, byte[] compressedImage) {
     super.init(viewTag);
     mData = data;
+    mCompressedImage = compressedImage;
   }
 
   @Override
@@ -56,6 +60,9 @@ public class LabelsDetectedEvent extends Event<LabelsDetectedEvent> {
     event.putString("type", "label");
     event.putArray("labels", mData);
     event.putInt("target", getViewTag());
+    if (mCompressedImage != null) {
+      event.putString("image", Base64.encodeToString(mCompressedImage, Base64.NO_WRAP));
+    }
     return event;
   }
 }

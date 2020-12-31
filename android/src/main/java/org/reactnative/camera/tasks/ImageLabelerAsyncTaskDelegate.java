@@ -5,7 +5,7 @@ import org.reactnative.imagelabeler.RNImageLabeler;
 
 public interface ImageLabelerAsyncTaskDelegate {
 
-    void onLabelsDetected(WritableArray labels);
+    void onLabelsDetected(WritableArray labels, int width, int height, byte[] imageData);
 
     void onImageLabelingError(RNImageLabeler imageLabeler);
 

@@ -84,7 +84,7 @@ public class TextRecognizerAsyncTask extends android.os.AsyncTask<Void, Void, Vo
               public void onSuccess(Text Text) {
                 List<Text.TextBlock> textBlocks = Text.getTextBlocks();
                 WritableArray serializedData = serializeEventData(textBlocks);
-                mDelegate.onTextRecognized(serializedData);
+                mDelegate.onTextRecognized(serializedData, mWidth, mHeight, mImageData);
                 mDelegate.onTextRecognizerTaskCompleted();
                 }
             })

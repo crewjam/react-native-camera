@@ -1,5 +1,7 @@
 package org.reactnative.camera.events;
 
+import android.util.Base64;
+
 import androidx.core.util.Pools;
 
 import org.reactnative.camera.CameraViewManager;
@@ -14,21 +16,23 @@ public class FacesDetectedEvent extends Event<FacesDetectedEvent> {
       new Pools.SynchronizedPool<>(3);
 
   private WritableArray mData;
+  private byte[] mCompressedImage;
 
   private FacesDetectedEvent() {}
 
-  public static FacesDetectedEvent obtain(int viewTag, WritableArray data) {
+  public static FacesDetectedEvent obtain(int viewTag, WritableArray data, byte[] compressedImage) {
     FacesDetectedEvent event = EVENTS_POOL.acquire();
     if (event == null) {
       event = new FacesDetectedEvent();
     }
-    event.init(viewTag, data);
+    event.init(viewTag, data, compressedImage);
     return event;
   }
 
-  private void init(int viewTag, WritableArray data) {
+  private void init(int viewTag, WritableArray data, byte[] compressedImage) {
     super.init(viewTag);
     mData = data;
+    mCompressedImage = compressedImage;
   }
 
   /**
@@ -60,6 +64,9 @@ public class FacesDetectedEvent extends Event<FacesDetectedEvent> {
     event.putString("type", "face");
     event.putArray("faces", mData);
     event.putInt("target", getViewTag());
+    if (mCompressedImage != null) {
+      event.putString("image", Base64.encodeToString(mCompressedImage, Base64.NO_WRAP));
+    }
     return event;
   }
 }

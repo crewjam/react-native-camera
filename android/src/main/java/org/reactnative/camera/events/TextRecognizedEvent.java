@@ -9,7 +9,7 @@ import com.facebook.react.uimanager.events.Event;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 import org.reactnative.camera.CameraViewManager;
-
+import android.util.Base64;
 
 public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
 
@@ -17,21 +17,23 @@ public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
       new Pools.SynchronizedPool<>(3);
 
   private WritableArray mData;
+  private byte[] mCompressedImage;
 
   private TextRecognizedEvent() {}
 
-  public static TextRecognizedEvent obtain(int viewTag, WritableArray data) {
+  public static TextRecognizedEvent obtain(int viewTag, WritableArray data, byte[] compressedImage) {
     TextRecognizedEvent event = EVENTS_POOL.acquire();
     if (event == null) {
       event = new TextRecognizedEvent();
     }
-    event.init(viewTag, data);
+    event.init(viewTag, data, compressedImage);
     return event;
   }
 
-  private void init(int viewTag, WritableArray data) {
+  private void init(int viewTag, WritableArray data, byte[] compressedImage) {
     super.init(viewTag);
     mData = data;
+    mCompressedImage = compressedImage;
   }
 
   @Override
@@ -49,6 +51,9 @@ public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
     event.putString("type", "textBlock");
     event.putArray("textBlocks", mData);
     event.putInt("target", getViewTag());
+    if (mCompressedImage != null) {
+      event.putString("image", Base64.encodeToString(mCompressedImage, Base64.NO_WRAP));
+    }
     return event;
   }
 }
